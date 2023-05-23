@@ -52,10 +52,8 @@ const verifyJWT = (req, res, next) =>{
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.connect();
+   
 
     const serviceCollection = client.db('carDoctor').collection('services');
     const bookingCollection = client.db('carDoctor').collection('bookings')
@@ -70,7 +68,16 @@ async function run() {
 
     // services route
     app.get('/services' , async(req, res) =>{
-        const cursor = serviceCollection.find()
+      const sort =req.query.sort;
+      const searchText = req.query.search;
+      console.log(searchText);
+      // const query = {price : {$lte : 200, $gt : 100}}
+      const query = {title : { $regex : searchText, $options : 'i'}}
+      const options = {
+        // sort matched documents in descending order by rating
+        sort: { "price": sort },
+      };
+        const cursor = serviceCollection.find(query, options)
         const result = await cursor.toArray()
         res.send(result)
     })
@@ -128,6 +135,10 @@ async function run() {
         const result = await bookingCollection.deleteOne(query)
         res.send(result)
     })
+
+     // Send a ping to confirm a successful connection
+     await client.db("admin").command({ ping: 1 });
+     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
   } finally {
     // Ensures that the client will close when you finish/error
